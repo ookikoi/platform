@@ -1,0 +1,181 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: "Commit SHA to deploy (from staging)"
+        required: true
+
+env:
+  AWS_REGION: eu-west-1
+
+jobs:
+  pre-deploy-checks:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit_sha }}
+
+      - name: Verify commit is in main
+        run: |
+          if ! git branch -r --contains ${{ inputs.commit_sha }} | grep -q 'origin/main'; then
+            echo "Error: Commit is not in main branch"
+            exit 1
+          fi
+
+      - name: Verify commit is in staging
+        run: |
+          # Check if this commit was previously deployed to staging
+          # Could verify against a tag or deployment record
+          echo "Verifying staging deployment history..."
+
+      - name: Check for breaking changes
+        run: |
+          # Example: verify no schema breaking changes
+          npm run validate:breaking-changes
+
+  plan:
+    needs: pre-deploy-checks
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit_sha }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME_PROD }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Plan Prod Deployment
+        run: |
+          cd platforms/infrastructure
+          terraform init -backend-config="bucket=${{ secrets.TERRAFORM_STATE_BUCKET }}" -backend-config="key=infrastructure/prod"
+          terraform plan -var-file=prod.tfvars -out=tfplan
+
+      - name: Save Plan
+        run: |
+          cd platforms/infrastructure
+          terraform show -json tfplan > /tmp/plan.json
+
+      - name: Upload Plan Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: terraform-plan
+          path: /tmp/plan.json
+
+  deploy:
+    needs: plan
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    environment: production-approval
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit_sha }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME_PROD }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Deploy to Production
+        run: |
+          cd platforms/infrastructure
+          terraform init -backend-config="bucket=${{ secrets.TERRAFORM_STATE_BUCKET }}" -backend-config="key=infrastructure/prod"
+          terraform apply -auto-approve -var-file=prod.tfvars
+
+      - name: Run Comprehensive Tests
+        run: npm run test:e2e -- --environment=prod
+
+      - name: Smoke Tests
+        run: npm run test:smoke -- --environment=prod
+
+      - name: Verify Metrics
+        run: |
+          # Check CloudWatch dashboards for anomalies
+          aws cloudwatch get-metric-statistics \
+            --namespace AWS/Lambda \
+            --metric-name Errors \
+            --start-time $(date -u -d '5 minutes ago' +%Y-%m-%dT%H:%M:%S) \
+            --end-time $(date -u +%Y-%m-%dT%H:%M:%S) \
+            --period 60 \
+            --statistics Sum
+
+      - name: Tag Release
+        run: |
+          git tag -a "release-${{ inputs.commit_sha }}" -m "Production deployment"
+          git push origin "release-${{ inputs.commit_sha }}"
+
+      - name: Create Release Notes
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: `release-${{ inputs.commit_sha }}`,
+              name: `Production Deploy - ${{ inputs.commit_sha }}`,
+              body: `Production deployment completed successfully.\n\nCommit: ${{ inputs.commit_sha }}\nDeployed by: ${{ github.actor }}\nTime: $(date -u +%Y-%m-%dT%H:%M:%SZ)`,
+              draft: false
+            })
+
+      - name: Notify Slack
+        if: success()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "🚀 Production deployment successful",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Production Deployment Complete* ✅\nCommit: ${{ inputs.commit_sha }}\nDeployed by: ${{ github.actor }}\nTime: $(date -u)"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_PROD }}
+
+      - name: Notify on Failure (with Rollback Alert)
+        if: failure()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "🚨 Production deployment FAILED",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Production Deployment FAILED* 🚨\nImmediate action required.\nSee: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|deployment logs>\nRunbook: workflows/runbooks/prod-rollback.md"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_PROD }}

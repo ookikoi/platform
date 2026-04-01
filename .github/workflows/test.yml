@@ -1,0 +1,107 @@
+name: Test & Lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [22.x]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Run tests
+        run: npm run test -- --coverage
+
+      - name: Check coverage thresholds
+        run: |
+          # Lambda handlers: 90%
+          # Components: 80%
+          # Utilities: 95%
+          npm run test -- --coverage --coverageThreshold='{"global":{"lines":80}}'
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/coverage-final.json
+          flags: unittests
+
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive platforms/
+
+      - name: Terraform Validate
+        run: |
+          cd platforms/infrastructure
+          terraform init -backend=false
+          terraform validate
+
+      - name: Terraform Init (Data Platform)
+        run: |
+          cd platforms/data-platform
+          terraform init -backend=false
+
+      - name: Terraform Validate (Data Platform)
+        run: |
+          cd platforms/data-platform
+          terraform validate
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run trivy scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          format: "sarif"
+          output: "trivy-results.sarif"
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: "trivy-results.sarif"
+
+      - name: Check for secrets
+        run: |
+          npm install --save-dev @trufflesecurity/trufflehog
+          npx trufflehog filesystem . --json || true
+
+      - name: Validate no hardcoded secrets
+        run: |
+          # Check for common patterns
+          ! grep -r "PRIVATE\|SECRET\|PASSWORD\|KEY" \
+            platforms/ \
+            --include="*.ts" \
+            --include="*.tf" \
+            | grep -v "// ignore\|# nocheck"

@@ -1,0 +1,90 @@
+name: Deploy to Dev
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "platforms/**"
+      - ".github/workflows/deploy-dev.yml"
+
+env:
+  AWS_REGION: eu-west-1
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME_DEV }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      - name: Deploy Data Platform
+        run: |
+          cd platforms/data-platform
+          terraform init -backend-config="bucket=${{ secrets.TERRAFORM_STATE_BUCKET }}" -backend-config="key=data-platform/dev" -backend-config="region=${{ env.AWS_REGION }}"
+          terraform plan -var-file=dev.tfvars -out=tfplan
+          terraform apply tfplan
+
+      - name: Deploy Infrastructure Platform
+        run: |
+          cd platforms/infrastructure
+          terraform init -backend-config="bucket=${{ secrets.TERRAFORM_STATE_BUCKET }}" -backend-config="key=infrastructure/dev"
+          terraform plan -var-file=dev.tfvars -out=tfplan
+          terraform apply tfplan
+
+      - name: Smoke Tests
+        run: |
+          npm run test:smoke -- --environment=dev
+
+      - name: Notify Slack
+        if: ${{ success() }}
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "✅ Dev deployment successful",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Dev Deployment Successful*\nCommit: ${{ github.sha }}\nAuthor: ${{ github.actor }}"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Notify on Failure
+        if: ${{ failure() }}
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "❌ Dev deployment failed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Dev Deployment Failed*\nCommit: ${{ github.sha }}\nAuthor: ${{ github.actor }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View logs>"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

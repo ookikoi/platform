@@ -1,0 +1,120 @@
+name: Deploy to Staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: "Commit SHA to deploy (leave empty for latest main)"
+        required: false
+
+env:
+  AWS_REGION: eu-west-1
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit_sha || 'main' }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME_STAGING }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      - name: Plan Data Platform
+        id: plan-data
+        run: |
+          cd platforms/data-platform
+          terraform init -backend-config="bucket=${{ secrets.TERRAFORM_STATE_BUCKET }}" -backend-config="key=data-platform/staging"
+          terraform plan -var-file=staging.tfvars -out=tfplan 2>&1 | tee plan.log
+          echo "PLAN_OUTPUT=$(cat plan.log)" >> $GITHUB_OUTPUT
+
+      - name: Plan Infrastructure
+        id: plan-infra
+        run: |
+          cd platforms/infrastructure
+          terraform init -backend-config="bucket=${{ secrets.TERRAFORM_STATE_BUCKET }}" -backend-config="key=infrastructure/staging"
+          terraform plan -var-file=staging.tfvars -out=tfplan 2>&1 | tee plan.log
+          echo "PLAN_OUTPUT=$(cat plan.log)" >> $GITHUB_OUTPUT
+
+      - name: Post Plan Comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## Staging Deployment Plan\n\nReady to deploy to staging. Approve the deployment workflow to proceed.`
+            })
+
+  deploy:
+    needs: plan
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    environment: staging-approval
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit_sha || 'main' }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME_STAGING }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Deploy Data Platform
+        run: |
+          cd platforms/data-platform
+          terraform init -backend-config="bucket=${{ secrets.TERRAFORM_STATE_BUCKET }}" -backend-config="key=data-platform/staging"
+          terraform apply -auto-approve -var-file=staging.tfvars
+
+      - name: Deploy Infrastructure
+        run: |
+          cd platforms/infrastructure
+          terraform init -backend-config="bucket=${{ secrets.TERRAFORM_STATE_BUCKET }}" -backend-config="key=infrastructure/staging"
+          terraform apply -auto-approve -var-file=staging.tfvars
+
+      - name: Smoke Tests
+        run: npm run test:smoke -- --environment=staging
+
+      - name: Notify Slack
+        if: success()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "✅ Staging deployment successful",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Staging Deployment Complete*\nAuthor: ${{ github.actor }}\nCommit: ${{ inputs.commit_sha || 'main' }}"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
