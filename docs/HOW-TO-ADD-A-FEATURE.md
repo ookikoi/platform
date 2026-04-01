@@ -8,7 +8,7 @@ Step-by-step guide for adding a new feature to the platform.
 
 You have **two ways** to create a feature:
 
-### **Path A: Interactive Wizard (Recommended for new devs)**
+### **Path A: Interactive Wizard (Recommended for learning)**
 
 ```bash
 /feature
@@ -22,14 +22,27 @@ Guided experience with questions:
 - Creates PRD + scaffolding automatically
 - Get implementation checklist
 
-**Use this if:** You're unsure about scope, structure, or what to build  
+**Or use arguments to skip questions:**
+
+```bash
+/feature --name product-search --services lambda event component --prf
+```
+
+**Or hybrid (some args, ask for rest):**
+
+```bash
+/feature --name product-search
+# → Skips "what are you building?" but asks about services, PRD
+```
+
+**Use this if:** You want guidance or know exactly what you need  
 **Time:** ~5 min to get fully scaffolded and ready to code
 
 **See:** [.claude/commands/feature.md](../.claude/commands/feature.md)
 
 ---
 
-### **Path B: Granular Commands (For experienced devs)**
+### **Path B: Granular Commands (For hands-on learning)**
 
 ```bash
 /lambda search-api --trigger api
@@ -41,7 +54,7 @@ Full control—create each piece separately:
 
 - Build exactly what you need
 - Understand each part as you go
-- Combine granular commands in any order
+- Combine commands in any order
 
 **Use this if:** You know exactly what you need or learning the architecture  
 **Time:** ~10 min (same work as wizard, more steps visible)

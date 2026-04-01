@@ -12,11 +12,11 @@ Scaffold a React component using design system tokens. Never raw values—always
 
 ### Parameters
 
-| Parameter | Required | Options | Example |
-|-----------|----------|---------|------------|
-| `ComponentName` | Yes | PascalCase | `UserCard`, `ReviewBadge` |
-| `--variant` | No | Any variant name | `--variant modal`, `--variant compact` |
-| `--description` | No | Any string | `"Displays user profile with avatar and bio"` |
+| Parameter       | Required | Options          | Example                                       |
+| --------------- | -------- | ---------------- | --------------------------------------------- |
+| `ComponentName` | Yes      | PascalCase       | `UserCard`, `ReviewBadge`                     |
+| `--variant`     | No       | Any variant name | `--variant modal`, `--variant compact`        |
+| `--description` | No       | Any string       | `"Displays user profile with avatar and bio"` |
 
 ---
 
@@ -51,12 +51,14 @@ platforms/design-system/components/<ComponentName>/
 ## Token Usage Rules
 
 **NEVER do this:**
+
 ```typescript
 // ❌ Raw hex, px, font-size
 style={{ color: "#e94560", padding: "16px", fontSize: "14px" }}
 ```
 
 **ALWAYS do this:**
+
 ```typescript
 // ✅ Use design system tokens
 style={{
@@ -71,6 +73,7 @@ style={{
 ## Testing Requirements
 
 Each component needs:
+
 - **Render test** — Component displays correctly with props
 - **Interaction test** — User actions (click, keyboard) work as expected
 - **Accessibility test** — axe-core scan finds no violations

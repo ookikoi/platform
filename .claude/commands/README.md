@@ -6,21 +6,22 @@ Invoke these commands in Copilot to scaffold platform components and features.
 
 ## High-Level Commands
 
-### `/feature` — Interactive Feature Wizard
+### `/feature` — Interactive Feature Wizard (with optional arguments)
 
 Create a feature from idea to production.
 
 ```
-/feature
+/feature                    # Interactive mode
+/feature --name X           # Hybrid mode (some args, ask for rest)
+/feature --name X --services lambda event --prf  # Full arguments
 ```
 
-- Answer guided questions about what you're building
-- Optionally create a PRD
-- Choose: scaffold all services at once, or granular control
-- Get an implementation checklist
-- Ready to code
+- Start with just `/feature` to be guided through every step
+- Or provide `--name`, `--services`, `--prf`, `--skip-scaffold` to skip questions
+- Either way: PRD + scaffolding + implementation checklist
+- Tools: Creates Lambdas, Events, Components, updates architecture
 
-**Use this when:** You have a feature idea but don't know what to build  
+**Use this when:** You have a feature idea  
 **See:** [feature.md](./feature.md)
 
 ---
@@ -38,6 +39,7 @@ Create a production-ready Lambda with handler, tests, and Terraform.
 ```
 
 **Creates:**
+
 - src/handler.ts (validated request handling)
 - src/handler.test.ts (test stubs)
 - src/types.ts (Zod schemas)
@@ -59,6 +61,7 @@ Create an event type for the event bus (EventBridge).
 ```
 
 **Creates:**
+
 - schema.ts (Zod schema—the contract)
 - publisher.ts (typed helper function)
 - consumer.ts (EventBridge handler stub)
@@ -80,6 +83,7 @@ Create a design-system component with tests and Storybook.
 ```
 
 **Creates:**
+
 - ComponentName.tsx (React component with tokens only)
 - ComponentName.test.tsx (RTL + axe accessibility tests)
 - ComponentName.stories.tsx (Storybook story)
@@ -107,21 +111,23 @@ Regenerate system architecture diagrams from your services.
 
 ```
 "I want to build a feature"
-├─ "I have a PRD or clear idea?"
-│  └─ YES → /feature
-│           (interactive wizard, guided)
+├─ "I'm learning / want guidance?"
+│  └─ /feature                                (fully interactive)
 │
-├─ "I know I need a Lambda"
-│  └─ YES → /lambda search-api --trigger api
+├─ "I know what I need?"
+│  └─ /feature --name X --services Y Z --prf (fast, with args)
+│
+├─ "I need just a Lambda"
+│  └─ /lambda search-api --trigger api
 │
 ├─ "Services need to communicate"
-│  └─ YES → /event product.created
+│  └─ /event product.created
 │
 ├─ "I'm building UI"
-│  └─ YES → /component SearchResults
+│  └─ /component SearchResults
 │
-└─ "I want full control, one step at a time"
-   └─ YES → Use multiple commands in sequence
+└─ "I want full control, one piece at a time"
+   └─ /lambda → /event → /component → one command per piece
 ```
 
 ---

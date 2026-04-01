@@ -1,16 +1,116 @@
 # Command: /feature
 
-Interactive feature creation wizard. Takes a feature idea from PRD to production-ready code in steps. You control the pace and level of detail.
+Feature creation wizard with optional arguments. Use fully interactive mode or provide arguments for faster scaffolding.
 
 ---
 
 ## Usage
 
+### Interactive Mode (Recommended for learning)
+
 ```
 /feature
 ```
 
-No arguments—fully interactive. The wizard will ask you questions and guide you through each step.
+Fully interactive. The wizard asks you questions and guides you through each step.
+
+### Argument Mode (Fast, for experienced devs)
+
+```
+/feature --name product-search --services lambda event component --prf
+```
+
+Provide arguments to skip questions and scaffold instantly.
+
+### Hybrid Mode (Mix and match)
+
+```
+/feature --name product-search
+# → Skips "what are you building?" but asks about services, PRD, etc.
+```
+
+### Parameters
+
+| Parameter         | Optional | Example                              |
+| ----------------- | -------- | ------------------------------------ |
+| `--name`          | Yes      | `--name product-search`              |
+| `--services`      | Yes      | `--services lambda event component`  |
+| `--prf`           | Yes      | Include flag to create PRD           |
+| `--skip-scaffold` | Yes      | Create PRD only, no code scaffolding |
+
+---
+
+## Examples
+
+### Fully Interactive (Learning Mode)
+
+```bash
+/feature
+
+? What are you building?
+> Add product search by name and category
+
+? Is this cross-platform?
+> Yes, needs multiple services
+
+? Which services?
+> [✓] Lambda (search-api)
+> [✓] Event (product.indexed)
+> [✓] Component (SearchResults)
+
+? Create PRD file?
+> Yes
+
+? Scaffold all services now?
+> Yes
+
+→ Creates PRD + all scaffolding + checklist
+```
+
+### Fast Mode with Arguments
+
+```bash
+/feature --name product-search --services lambda event component --prf
+
+? Confirm for product-search:
+  - scaffold-api Lambda (HTTP API)
+  - product.indexed Event
+  - SearchResults Component
+  - Create PRD?
+> YES
+
+→ All created, ready to code
+```
+
+### PRD Only (No Scaffolding)
+
+```bash
+/feature --name product-search --prf --skip-scaffold
+
+→ Creates PRDs/product-search-2026-04-01.md only
+→ You scaffold services manually with /lambda, /event, /component
+```
+
+### Just a Component (No PRD)
+
+```bash
+/feature --name rating-display --services component
+
+→ Creates SearchResults component only
+→ No PRD (isolated change, single service)
+```
+
+---
+
+## When to Use Each Approach
+
+| Mode            | When                       | Command                                   |
+| --------------- | -------------------------- | ----------------------------------------- |
+| **Interactive** | Learning, exploring        | `/feature`                                |
+| **Arguments**   | I know what I need         | `/feature --name X --services Y Z --prf`  |
+| **Hybrid**      | Some known, some uncertain | `/feature --name X`                       |
+| **PRD only**    | Don't want to scaffold yet | `/feature --name X --prf --skip-scaffold` |
+| **One piece**   | Just one Lambda/component  | `/lambda search-api` (skip wizard)        |
 
 ---
 
@@ -19,33 +119,27 @@ No arguments—fully interactive. The wizard will ask you questions and guide yo
 ### **Path A: Following the Wizard (All at Once)**
 
 ```
-/feature
-  ↓ "What are you building?"
-  ↓ "Is this cross-platform?" → PRD needed
-  ↓ "What services? (Lambdas, Events, Components)"
-  ↓ "Create PRD now?"
-  ↓ Creates all scaffolding at once
-  ↓ "Ready to implement?"
+/feature                    (or with args: /feature --name X --services Y Z --prf)
+  ↓ Asks questions (or skips if given args)
+  ↓ Determines if PRD needed
+  ↓ Creates scaffolding for all services
+  ↓ Generates implementation checklist
 ```
 
-**Pros:** Fast, guided, asks right questions  
+**Pros:** Guided, foolproof, clear next steps  
 **Cons:** Less control over individual pieces
 
-### **Path B: Granular Step-by-Step (Your Control)**
+### **Path B: Granular Step-by-Step (Maximum Control)**
 
 ```
-/lambda search-api --trigger api
-  ↓ (Write handler, tests, handler logic)
-  ↓
-/event product.indexed
-  ↓ (Define event schema)
-  ↓
-/component SearchResults
-  ↓ (Build React component)
-  ↓
-/diagram
-  ↓ (Update architecture)
-  ↓
+/lambda search-api --trigger api      (create + implement handler)
+↓
+/event product.indexed                 (define schema + publisher)
+↓
+/component SearchResults              (build UI + tests)
+↓
+/diagram                              (update architecture)
+↓
 Create PR manually
 ```
 
@@ -74,11 +168,13 @@ When you run `/feature`, it will:
    - Option C: Skip PRD (small isolated changes only)
 
 4. **Create PRD** (if cross-platform)
+
    ```
    PRDs/[feature-name]-YYYY-MM-DD.md
    ```
 
 5. **Scaffold services** (your choice)
+
    ```
    /lambda search-api
    /event product.indexed
@@ -150,13 +246,13 @@ Next: Edit src/handler.ts and write real business logic.
 
 ## When to Use Each Path
 
-| Situation | Use This |
-|-----------|----------|
-| "I have an idea but don't know where to start" | `/feature` wizard |
-| "I know exactly what I need (1 Lambda)" | `/lambda search-api` |
-| "I'm creating an event, need a schema first" | `/event product.indexed` |
-| "I'm building a UI component" | `/component SearchResults` |
-| "I'm already in the code, skip scaffolding" | Manual—no command needed |
+| Situation                                      | Use This                   |
+| ---------------------------------------------- | -------------------------- |
+| "I have an idea but don't know where to start" | `/feature` wizard          |
+| "I know exactly what I need (1 Lambda)"        | `/lambda search-api`       |
+| "I'm creating an event, need a schema first"   | `/event product.indexed`   |
+| "I'm building a UI component"                  | `/component SearchResults` |
+| "I'm already in the code, skip scaffolding"    | Manual—no command needed   |
 
 ---
 
@@ -192,11 +288,11 @@ Members can search for products by name and category, with results ranked by rat
 
 ## Services Required
 
-| Service | Purpose | Epic |
-|---------|---------|------|
-| search-api | HTTP endpoint for search | Search |
+| Service         | Purpose                  | Epic          |
+| --------------- | ------------------------ | ------------- |
+| search-api      | HTTP endpoint for search | Search        |
 | product-indexer | Index products in search | Data Platform |
-| SearchResults | Display results UI | Design System |
+| SearchResults   | Display results UI       | Design System |
 
 ---
 
@@ -257,6 +353,7 @@ Once scaffolding is done:
 ## Choosing Your Approach
 
 ### **I Want the Wizard (Fast)**
+
 ```
 /feature
 → Answer questions
@@ -265,6 +362,7 @@ Once scaffolding is done:
 ```
 
 ### **I Want Granular Control (Learning)**
+
 ```
 /lambda search-api
 → Implement
@@ -277,6 +375,7 @@ Once scaffolding is done:
 ```
 
 ### **I Already Know What I'm Doing (Experienced)**
+
 ```
 mkdir -p platforms/infrastructure/lambdas/search-api/{src,infra}
 → Copy templates from existing similar service

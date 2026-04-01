@@ -186,7 +186,7 @@ workflows/
 ## Quick Answers
 
 **Q: How do I add a new feature?**  
-A: Use `/feature` (interactive wizard) or follow [HOW-TO-ADD-A-FEATURE.md](./HOW-TO-ADD-A-FEATURE.md) for granular control.
+A: Use `/feature` (interactive) or `/feature --name X --services Y Z --prf` (fast with args) — see [HOW-TO-ADD-A-FEATURE.md](./HOW-TO-ADD-A-FEATURE.md).
 
 **Q: How do I create a new Lambda?**  
 A: `invoke /lambda search-api --trigger api` — or see [../.claude/commands/lambda.md](../.claude/commands/lambda.md) for details.
