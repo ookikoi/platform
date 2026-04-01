@@ -131,14 +131,16 @@ How to revert a bad deployment in production.
 
 ## Reference
 
-| Topic                          | Where                                                                                  |
-| ------------------------------ | -------------------------------------------------------------------------------------- |
-| What is this platform?         | [../CLAUDE.md](../CLAUDE.md)                                                           |
-| System architecture diagram    | [../architecture/system-map.md](../architecture/system-map.md)                         |
-| User registration flow example | [../architecture/flow-user-registration.md](../architecture/flow-user-registration.md) |
-| Create a Lambda                | [../.claude/commands/lambda.md](../.claude/commands/lambda.md)                         |
-| Create a UI component          | [../.claude/commands/component.md](../.claude/commands/component.md)                   |
-| Define an event                | [../.claude/commands/event.md](../.claude/commands/event.md)                           |
+| Topic                          | Where                                                                                   |
+| ------------------------------ | --------------------------------------------------------------------------------------- |
+| What is this platform?         | [../CLAUDE.md](../CLAUDE.md)                                                            |
+| System architecture diagram    | [../architecture/system-map.md](../architecture/system-map.md)                          |
+| User registration flow example | [../architecture/flow-user-registration.md](../architecture/flow-user-registration.md)  |
+| **Custom Commands**            | **[../.claude/commands/README.md](../.claude/commands/README.md)**                      |
+| Create a feature (wizard)      | `/feature` (see [../.claude/commands/feature.md](../.claude/commands/feature.md))       |
+| Create a Lambda                | `/lambda` (see [../.claude/commands/lambda.md](../.claude/commands/lambda.md))          |
+| Create a UI component          | `/component` (see [../.claude/commands/component.md](../.claude/commands/component.md)) |
+| Define an event                | `/event` (see [../.claude/commands/event.md](../.claude/commands/event.md))             |
 
 ---
 
@@ -163,10 +165,11 @@ docs/
 │   ├── testing.md
 │   └── design-system.md
 ├── commands/
-│   ├── lambda.md
-│   ├── component.md
-│   ├── event.md
-│   └── diagram.md
+│   ├── README.md              ← Index of all commands
+│   ├── feature.md             ← Interactive wizard
+│   ├── lambda.md              ← Create Lambda
+│   ├── component.md           ← Create React component
+│   └── event.md               ← Define event
 └── skills/ (advanced usage)
 
 workflows/
@@ -183,10 +186,13 @@ workflows/
 ## Quick Answers
 
 **Q: How do I add a new feature?**  
-A: Follow [HOW-TO-ADD-A-FEATURE.md](./HOW-TO-ADD-A-FEATURE.md) — covers PRD, service creation, testing, and deployment.
+A: Use `/feature` (interactive wizard) or follow [HOW-TO-ADD-A-FEATURE.md](./HOW-TO-ADD-A-FEATURE.md) for granular control.
 
 **Q: How do I create a new Lambda?**  
-A: See [../CLAUDE.md](../CLAUDE.md) and [../.claude/commands/lambda.md](../.claude/commands/lambda.md), then [LOCAL-DEVELOPMENT.md](./LOCAL-DEVELOPMENT.md) to test it.
+A: `invoke /lambda search-api --trigger api` — or see [../.claude/commands/lambda.md](../.claude/commands/lambda.md) for details.
+
+**Q: How do I create an event or component?**  
+A: `invoke /event product.created` or `invoke /component SearchResults` — see [../.claude/commands/](../.claude/commands/) for all commands.
 
 **Q: How do I get my code to production?**  
 A: Follow [DEPLOYMENT.md](./DEPLOYMENT.md) and [../workflows/APPROVAL-GATES.md](../workflows/APPROVAL-GATES.md).
