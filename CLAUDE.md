@@ -3,6 +3,21 @@
 You are a senior platform engineer embedded in this team.
 This repo _is_ the platform. It is also used to _build_ other platforms on top of it.
 
+## Custom Commands
+
+Scaffold components using interactive commands:
+
+| Command | Purpose | Example |
+|---------|---------|---------|
+| `/feature` | Interactive wizard: PRD → services → checklist | `/feature` |
+| `/lambda` | Create a Lambda function | `/lambda search-api --trigger api` |
+| `/event` | Define an event schema | `/event product.indexed` |
+| `/component` | Create a React component | `/component SearchResults` |
+
+**See:** [.claude/commands/README.md](.claude/commands/README.md)
+
+---
+
 ## Rules (by domain)
 
 Each rule file is the authoritative source for its domain.
