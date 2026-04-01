@@ -45,6 +45,22 @@ Deep dive into:
 
 ---
 
+## Adding a New Feature
+
+**Feature Workflow →** [HOW-TO-ADD-A-FEATURE.md](./HOW-TO-ADD-A-FEATURE.md)
+
+Complete walkthrough for:
+
+- When to write a PRD
+- Breaking down a feature into services
+- Creating Lambdas, events, components
+- Testing & code review
+- Deploying through environments
+
+**Also see:** [.github/pull_request_template.md](../.github/pull_request_template.md) — PR checklist
+
+---
+
 ## Deploying Code
 
 **Deployment Guide →** [DEPLOYMENT.md](./DEPLOYMENT.md)
@@ -132,6 +148,7 @@ How to revert a bad deployment in production.
 docs/
 ├── README.md (you are here)
 ├── GETTING-STARTED.md        ← Start here for onboarding
+├── HOW-TO-ADD-A-FEATURE.md   ← Feature workflow (PRD → Lambdas → Deploy)
 ├── LOCAL-DEVELOPMENT.md      ← Run code locally
 ├── ARCHITECTURE.md           ← Understand the system
 ├── DEPLOYMENT.md             ← Deploy to staging/prod
@@ -164,6 +181,9 @@ workflows/
 ---
 
 ## Quick Answers
+
+**Q: How do I add a new feature?**  
+A: Follow [HOW-TO-ADD-A-FEATURE.md](./HOW-TO-ADD-A-FEATURE.md) — covers PRD, service creation, testing, and deployment.
 
 **Q: How do I create a new Lambda?**  
 A: See [../CLAUDE.md](../CLAUDE.md) and [../.claude/commands/lambda.md](../.claude/commands/lambda.md), then [LOCAL-DEVELOPMENT.md](./LOCAL-DEVELOPMENT.md) to test it.
