@@ -13,11 +13,11 @@ Create a feature from idea to production.
 ```
 /feature                    # Interactive mode
 /feature --name X           # Hybrid mode (some args, ask for rest)
-/feature --name X --services lambda event --prf  # Full arguments
+/feature --name X --services lambda event --prd  # Full arguments
 ```
 
 - Start with just `/feature` to be guided through every step
-- Or provide `--name`, `--services`, `--prf`, `--skip-scaffold` to skip questions
+- Or provide `--name`, `--services`, `--prd`, `--skip-scaffold` to skip questions
 - Either way: PRD + scaffolding + implementation checklist
 - Tools: Creates Lambdas, Events, Components, updates architecture
 
@@ -115,7 +115,7 @@ Regenerate system architecture diagrams from your services.
 │  └─ /feature                                (fully interactive)
 │
 ├─ "I know what I need?"
-│  └─ /feature --name X --services Y Z --prf (fast, with args)
+│  └─ /feature --name X --services Y Z --prd (fast, with args)
 │
 ├─ "I need just a Lambda"
 │  └─ /lambda search-api --trigger api

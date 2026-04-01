@@ -25,7 +25,7 @@ Guided experience with questions:
 **Or use arguments to skip questions:**
 
 ```bash
-/feature --name product-search --services lambda event component --prf
+/feature --name product-search --services lambda event component --prd
 ```
 
 **Or hybrid (some args, ask for rest):**

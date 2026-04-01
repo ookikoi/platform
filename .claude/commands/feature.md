@@ -17,7 +17,7 @@ Fully interactive. The wizard asks you questions and guides you through each ste
 ### Argument Mode (Fast, for experienced devs)
 
 ```
-/feature --name product-search --services lambda event component --prf
+/feature --name product-search --services lambda event component --prd
 ```
 
 Provide arguments to skip questions and scaffold instantly.
@@ -35,7 +35,7 @@ Provide arguments to skip questions and scaffold instantly.
 | ----------------- | -------- | ------------------------------------ |
 | `--name`          | Yes      | `--name product-search`              |
 | `--services`      | Yes      | `--services lambda event component`  |
-| `--prf`           | Yes      | Include flag to create PRD           |
+| `--prd`           | Yes      | Include flag to create PRD           |
 | `--skip-scaffold` | Yes      | Create PRD only, no code scaffolding |
 
 ---
@@ -70,7 +70,7 @@ Provide arguments to skip questions and scaffold instantly.
 ### Fast Mode with Arguments
 
 ```bash
-/feature --name product-search --services lambda event component --prf
+/feature --name product-search --services lambda event component --prd
 
 ? Confirm for product-search:
   - scaffold-api Lambda (HTTP API)
@@ -85,7 +85,7 @@ Provide arguments to skip questions and scaffold instantly.
 ### PRD Only (No Scaffolding)
 
 ```bash
-/feature --name product-search --prf --skip-scaffold
+/feature --name product-search --prd --skip-scaffold
 
 → Creates PRDs/product-search-2026-04-01.md only
 → You scaffold services manually with /lambda, /event, /component
@@ -107,9 +107,9 @@ Provide arguments to skip questions and scaffold instantly.
 | Mode            | When                       | Command                                   |
 | --------------- | -------------------------- | ----------------------------------------- |
 | **Interactive** | Learning, exploring        | `/feature`                                |
-| **Arguments**   | I know what I need         | `/feature --name X --services Y Z --prf`  |
+| **Arguments**   | I know what I need         | `/feature --name X --services Y Z --prd`  |
 | **Hybrid**      | Some known, some uncertain | `/feature --name X`                       |
-| **PRD only**    | Don't want to scaffold yet | `/feature --name X --prf --skip-scaffold` |
+| **PRD only**    | Don't want to scaffold yet | `/feature --name X --prd --skip-scaffold` |
 | **One piece**   | Just one Lambda/component  | `/lambda search-api` (skip wizard)        |
 
 ---
@@ -119,7 +119,7 @@ Provide arguments to skip questions and scaffold instantly.
 ### **Path A: Following the Wizard (All at Once)**
 
 ```
-/feature                    (or with args: /feature --name X --services Y Z --prf)
+/feature                    (or with args: /feature --name X --services Y Z --prd)
   ↓ Asks questions (or skips if given args)
   ↓ Determines if PRD needed
   ↓ Creates scaffolding for all services
